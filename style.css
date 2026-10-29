@@ -530,3 +530,11 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid #26
 .entry-result-utilities .note-header{min-height:44px;flex-wrap:wrap}.entry-result-utilities .note-input{min-width:0}.entry-result-utilities .note-editor-footer{flex-wrap:wrap}
 @media(min-width:1120px) and (min-height:740px){.learning-scale .expression-comparison .expression-comparison-value{font-size:25px}.learning-scale .expression-comparison-label{font-size:16px}.learning-scale .entry-result-utilities :is(.entry-edit,.note-add){font-size:16px}}
 @media(max-width:700px){.expression-comparison{grid-template-columns:minmax(0,1fr);gap:22px}.expression-comparison .expression-comparison-value{font-size:18px}.entry-result-utilities{margin-top:20px}}
+
+/* Alternate translations can be checked externally without declaring them wrong. */
+.translation-check-tools{margin:22px 0;text-align:left}
+.translation-check-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+.translation-check-actions>.button{width:100%;min-width:0;max-width:none;min-height:48px;padding:10px 12px;white-space:normal;line-height:1.45;box-sizing:border-box}
+.translation-check-tools .translation-check-help{margin:10px 0 0;font-size:13px;line-height:1.7;color:#58728d}
+@media(min-width:1120px) and (min-height:740px){.learning-scale .translation-check-actions>.button{min-height:54px;font-size:16px;padding:10px 12px}}
+@media(max-width:650px){.translation-check-actions{gap:10px}.translation-check-actions>.button{font-size:14px;padding:10px 8px}}

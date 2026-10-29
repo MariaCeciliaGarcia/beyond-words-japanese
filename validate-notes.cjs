@@ -79,3 +79,25 @@ console.log('PASS: Japanese-only keys/backup formats; natural Japanese, particle
  assert(r("noteEditorMarkup('draft','','draft').includes('收起笔记')"));
  console.log('PASS: untruncated long AI inputs without fixed explanation count; clear add/edit/collapse note actions.');
 }
+
+// Copying a translation check uses the actual active/pinned question and never advances it.
+(async()=>{
+ for(const mode of ['entry','learn','review']){
+  const env=setup(),run=env.run;let copied='';
+  env.ctx.navigator={clipboard:{writeText:async text=>{copied=text}}};
+  run("selectLesson('jp-yoyuu');state.learn=newLearning();view='study'");
+  if(mode==='entry')run("state.learn.stage='intro';state.learn.entryAttempt={...newQuestionState(),input:'An alternative wording to check',checked:true,revealed:true}");
+  else if(mode==='learn')run("state.learn.stage='exercise';state.learn.q={...newQuestionState(),input:'An alternative wording to check',checked:true,revealed:true}");
+  else run("enrolled();startReview();view='practice';state.review.q={...newQuestionState(),input:'An alternative wording to check',checked:true,revealed:true}");
+  run('render()');const before=run('JSON.stringify(state)');
+  assert(run('app.innerHTML').includes('copy-translation-check'));assert(!run('app.innerHTML').includes('核对重点'));
+  await run('copyTranslationCheck()');
+  assert(copied.includes('An alternative wording to check'));assert(copied.includes('不是唯一答案'));assert(copied.includes('不要因为它与参考表达不同就判错'));assert(copied.includes('不要重复解释它本身'));assert(copied.includes('新单词、搭配或语法'));
+  assert.equal(run('JSON.stringify(state)'),before);
+  env.ctx.navigator.clipboard.writeText=async()=>{throw Error('denied')};
+  await run('copyTranslationCheck()');assert(run('dialog.innerHTML').includes('An alternative wording to check'));assert.equal(run('JSON.stringify(state)'),before);
+ }
+ const env=setup();env.run("selectLesson('jp-yoyuu');state.learn=newLearning();state.learn.stage='exercise';view='study';render()");
+ assert(!env.run('app.innerHTML').includes('copy-translation-check'));
+ console.log('PASS: active/pinned translation prompts, alternate-valid wording, initial/learning/review copy, denied-copy fallback and unchanged attempts.');
+})().catch(error=>{console.error(error);process.exitCode=1});

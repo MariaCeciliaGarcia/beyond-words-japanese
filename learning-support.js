@@ -16,6 +16,19 @@ function personalCheckPrompt(content){
 必须使用“${lesson.expression}”，可按语境调整时态、否定、活用和普通／礼貌语体。${scope}${attempt}
 再用中文解释句中其他关键词语／搭配及助词、活用或句式中实际用到的语法，根据句子的长度和难点展开，复杂结构可分段拆解，讲清楚且保持精炼。我已经熟悉正在练习的目标表达“${lesson.expression}”，不要重复解释它本身的意思、基本用法或对应知识点。解释只针对句中其他值得学习的词语、搭配和语法；若没有其他需要解释的内容，无需另加讲解。若目标表达在本句中使用有误或不适用，只指出具体问题及必要的修改理由，不展开复习它本身。`;
 }
+function translationCheckPrompt(q,qs){
+ const fields=[['情境',q.scene],['对方说',q.dialogue],['态度／意图',q.intent],['原题',q.zh],['要表达的意思',q.target],['填空句（如有）',q.stem],['本轮练习的目标表达',lesson.expression],['我的日语尝试（请优先核对这句）',qs.input],['页面参考表达（仅供对照，不是唯一答案）',(q.answers||[]).join('\n')]].filter(([,text])=>typeof text==='string'&&text.trim());
+ return `请核对下面这道日语表达练习。\n${fields.map(([label,text])=>label+'：'+text).join('\n')}\n页面只按收录答案匹配，未匹配不代表我写错。请根据题意、语境和实际日语用法，独立判断我的原句是否意思准确、语法正确、表达自然、得体，并结合人物关系检查礼貌程度、助词和活用；不要因为它与参考表达不同就判错。若是填空题，请把我的填写放回题干后判断。\n如果我的原句正确且自然，请明确说可以这样说，并简要说明；不要为贴近参考答案而强行改写。口语缩略、语体差异或只是可选润色，请与真正的错误区分。\n如果不准确、不正确或不自然，请具体指出哪里有问题、为什么，给出保留原意的自然修改；不要只贴一个答案。结合修改简要解释涉及的新单词、搭配或语法，按实际难点讲清楚，不限制条数或句数。\n我已熟悉本轮目标表达，不要重复解释它本身的意思、基本用法或对应知识点；只有它在这句话里确实用错或不适用时，才说明具体问题与必要修改理由。\n请用中文讲解，日语例句保留原文。`;
+}
+function translationCheckControls(q,qs,editAction='edit-answer'){
+ if(questionType(q)!=='input'||!qs.checked||!qs.revealed||!qs.input?.trim())return '';
+ return `<div class="translation-check-tools"><div class="actions translation-check-actions">${button('修改再试',editAction,'button secondary')}${button('复制 AI 核对指令','copy-translation-check','button secondary')}</div><p class="small translation-check-help">复制后粘贴发送给 AI，核对你的表达是否正确、自然。</p></div>`;
+}
+async function copyTranslationCheck(){
+ const c=currentContext()||(view==='study'&&state.learn?.stage==='intro'?{q:state.learn.pinnedEntry||lesson.entry,qs:state.learn.entryAttempt||state.learn.q}:null);
+ if(!c||questionType(c.q)!=='input'||!c.qs.checked||!c.qs.revealed||!c.qs.input?.trim())return;
+ await copyCheckText(translationCheckPrompt(c.q,c.qs));
+}
 function personalCheckControl(id=''){
  const ready=id|| (scenarioUnit()?state.draft.scene?.trim():state.draft.zh?.trim());
  return `<div class="ai-check-tools">${button('复制 AI 核对指令','copy-ai-check','button secondary',`data-id="${esc(id)}" ${ready?'':'disabled'}`)}</div>`;
@@ -25,7 +38,9 @@ async function copyPersonalCheck(id){
  if(dialog.open&&document.getElementById(scenarioUnit()?'edit-scene':'edit-zh'))content=scenarioUnit()?{scene:document.getElementById('edit-scene').value,intent:document.getElementById('edit-intent')?.value||''}:{zh:document.getElementById('edit-zh').value,en:document.getElementById('edit-en')?.value||''};
  else content=id?state.custom.find(c=>c.id===id):state.draft;
  if(!content||(scenarioUnit()?!content.scene?.trim():!content.zh?.trim())){toast(scenarioUnit()?'先写下你想到的场景':'先写下中文意思');return;}
- const text=personalCheckPrompt(content);
+ await copyCheckText(personalCheckPrompt(content));
+}
+async function copyCheckText(text){
  try{if(typeof navigator==='undefined'||!navigator.clipboard?.writeText)throw Error('clipboard');await navigator.clipboard.writeText(text);toast('指令已复制，粘贴给你常用的 AI 即可');}
  catch{
   const editor=dialog.open&&/id="edit-(?:zh|scene)"/.test(dialog.innerHTML);
