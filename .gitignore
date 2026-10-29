@@ -1,0 +1,12 @@
+backups/
+.DS_Store
+node_modules/
+*.log
+
+.env
+.env.*
+/tests/
+outputs/
+*学习备份*.json
+*进度副本*.json
+*原始进度*.txt
