@@ -72,6 +72,31 @@ function continueLearningHome(){
 }
 function continueReviewHome(){if(!Object.prototype.hasOwnProperty.call(store,'reviewScope'))store.reviewScope=requestedReviewScope();const target=reviewResumeTarget();if(!target){go('review');return;}selectLesson(target.id);if(state.review)go('practice');else startReview();}
 function supportHomePage(){
- const learn=learningResumeTarget(),review=reviewResumeTarget(),r=review&&record(review.id),due=filterReviewScope(availableUnits(),requestedReviewScope()).filter(u=>record(u.id).schedule.due<=Date.now()).length;
- return `<section class="home-intro ${learn||review?'has-resume':''}">${learn||review?'':'<p class="eyebrow">一点一点，把表达变成自己的。</p>'}<h1>${learn||review?'接着上次，继续练。':'想说的话，<br>练到能用出来。'}</h1>${learn||review?'':'<p class="lead">学习和复习，各自保留进度。</p>'}</section><section class="home-grid"><article class="home-card"><h2>学习</h2>${learn?`<p class="resume-meaning">${esc(learn.unit.meaning)}</p><p class="small">${learn.dayRestart?'小枝萌菜 · '+ceciliaDateLabel(originDay(learn.origin))+' · 本日未练习':learningStatusFor(learn.unit)}</p>`:'<p>按场景或表达功能，找到想练的内容。</p>'}<div class="actions">${button(learn?'继续学习':'开始学习',learn?'continue-learning-home':'library')}${learn?button('选择新表达','library','text-button'):''}</div>${`<div class="daily-home-entry">${button('<span><strong>小枝萌菜</strong><small>每日语料 · 按日期学习</small></span><span aria-hidden="true">→</span>','cecilia-dates','daily-home-link')}<p class="small">${ceciliaDays().length?'最近更新：'+esc(ceciliaDateLabel(ceciliaDays()[0].id))+' · '+ceciliaDays().length+' 天材料':'把每天遇见的日语，留在自己的日期库里。'}</p></div>`}</article><article class="home-card review"><h2>复习</h2>${review?`<p class="resume-meaning">${esc(review.meaning)}</p><p class="small">${(r.review?r.review.origin:requestedReviewScope())?.domain==='moena'?'小枝萌菜 · '+ceciliaDateLabel((r.review?r.review.origin:requestedReviewScope()).dateId)+' · ':''}${r.review?`本轮 ${r.review.index+1} / ${r.review.queue.length} 题`:r.schedule.due<=Date.now()?`${due} 个表达到期`:'尚未到期，也可以提前练习'}</p>`:'<p>先学习一个表达，再回来巩固。</p>'}<div class="actions">${button(r?.review?'继续复习':review?r.schedule.due<=Date.now()?'开始复习':'提前复习':'查看复习库',review?'continue-review-home':'review')}${review?button('查看复习库','review','text-button'):''}</div></article></section>${backupReminder()}`;
+ const learn=learningResumeTarget(),review=reviewResumeTarget(),r=review&&record(review.id);
+ const learningCopy=learn?(learn.dayRestart?'小枝萌菜 · '+ceciliaDateLabel(originDay(learn.origin))+' · 本日未练习':learningStatusFor(learn.unit)):'按场景或表达功能，选择想练的内容';
+ const reviewCopy=r?.review?`本轮已完成 ${r.review.index} / ${r.review.queue.length} 题`:review?(r.schedule.due<=Date.now()?'已到复习时间':'尚未到期，也可以提前练习'):'先学习一个表达，复习会从这里开始';
+ const card=(kind,title,topic,copy,actions)=>`<article class="home-card home-${kind}" aria-labelledby="home-${kind}-title"><h2 id="home-${kind}-title" class="home-entry-title">${title}</h2><div class="home-card-center"><p class="home-topic-label">${topic?'本次主题':kind==='learn'?'从这里开始':'温故知新'}</p><h3 class="home-topic">${topic?esc(topic):kind==='learn'?'找到想说的表达':'让表达记得更牢'}</h3><p class="home-progress">${esc(copy)}</p></div><div class="home-actions">${actions}</div></article>`;
+ return `<section class="home-intro"><p class="eyebrow">一点一点，把表达变成自己的。</p><h1>想说的话，<br>练到能用出来。</h1></section><section class="home-grid" aria-label="学习与复习">${card('learn','学习',learn?.unit.meaning,learningCopy,button('选择新表达','library','button home-action')+button('继续学习','continue-learning-home','button home-action',learn?'':'disabled aria-describedby="home-learn-empty"'))}${card('review','复习',review?.meaning,reviewCopy,button('查看复习库','review','button home-action')+button('继续复习','continue-review-home','button home-action',review?'':'disabled aria-describedby="home-review-empty"'))}</section>${!learn?'<p id="home-learn-empty" class="visually-hidden">暂无可继续的学习，请先选择新表达。</p>':''}${!review?'<p id="home-review-empty" class="visually-hidden">暂无可复习的表达，请先开始学习。</p>':''}`;
+}
+// A scope counts expression units, never raw source lines or individual questions.
+function libraryProgress(ids,day){
+ const unique=[...new Set(ids)].filter(id=>unitById.has(id));
+ const p={total:unique.length,completed:0,mastered:0,active:0,skipped:0,due:0,pendingReview:0};
+ for(const id of unique){const r=record(id),visit=day?ceciliaVisit(id,day):null,l=r.learn;
+  const sameDay=!day||originDay(l?.origin)===day;
+  const attempted=l?.results?.some(x=>x.grade!=='skip');
+  if(day?visit?.status==='mastered':r.mastered)p.mastered++;
+  else if(day&&visit?.status==='skip')p.skipped++;
+  else if(day&&visit?.status==='done'){
+   const didPractice=visit.attempted??(sameDay&&l?.stage==='done'?!!attempted:true);
+   if(didPractice)p.completed++;else p.skipped++;
+  }else if(sameDay&&l?.stage==='done'){if(attempted)p.completed++;else p.skipped++;}
+  else if(l&&l.stage!=='done'&&sameDay)p.active++;
+  if(r.enrolled&&!r.mastered){if(r.schedule.due<=Date.now())p.due++;if(r.review)p.pendingReview++;}
+ }
+ return p;
+}
+function libraryProgressMarkup(ids,day){
+ const p=libraryProgress(ids,day),finished=p.completed+p.mastered,pc=n=>p.total?100*n/p.total:0;
+ return `<section class="library-progress" aria-label="${day?'当天':'当前库'}学习与复习进度"><div class="library-learning-progress"><div class="library-progress-heading"><h2>学习进度</h2><p><strong>${finished}</strong><span> / ${p.total} 个表达</span></p></div><div class="library-progress-track" role="progressbar" aria-label="已学完或已掌握的表达" aria-valuemin="0" aria-valuemax="${p.total||1}" aria-valuenow="${finished}" aria-valuetext="已学完 ${p.completed}，已掌握 ${p.mastered}，共 ${p.total} 个表达"><span class="progress-learned" style="width:${pc(p.completed)}%"></span><span class="progress-mastered" style="width:${pc(p.mastered)}%"></span></div><div class="library-progress-legend"><span>已学完 <b>${p.completed}</b></span><span>已掌握 <b>${p.mastered}</b></span><span>学习中 <b>${p.active}</b></span>${p.skipped?`<span>已略过 <b>${p.skipped}</b></span>`:''}</div></div><div class="library-review-progress"><h2>复习安排</h2><div><span>已到期 <strong>${p.due}</strong> 个</span><span>未完成 <strong>${p.pendingReview}</strong> 轮</span></div></div></section>`;
 }

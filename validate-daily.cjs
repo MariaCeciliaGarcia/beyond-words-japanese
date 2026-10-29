@@ -11,7 +11,7 @@ r("domain='moena';filter='all';view='library';render()");
 assert(r('app.innerHTML').includes('还没有每日语料'));
 assert(!r('app.innerHTML').includes('Cecilia'));
 assert.equal(r('routeURL("library")'),'/'+'#library/moena');
-r("view='home';render()");assert(r('app.innerHTML').includes('小枝萌菜'));
+r("view='home';render()");assert(!r('app.innerHTML').includes('daily-home-entry'));assert(r('app.innerHTML').includes('home-learn-title'));r("view='library';domain='moena';render()");assert(r('app.innerHTML').includes('小枝萌菜'));
 // Fixture data lives only in this VM, never in daily-materials.js or a browser.
 r(`
 var privateFixture=JSON.parse(JSON.stringify(unitById.get('jp-yoyuu')));
