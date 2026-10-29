@@ -10,11 +10,11 @@ function expressionHint(q){
 function personalCheckPrompt(content){
  const scope='结合场景和人物关系判断礼貌程度，保留原意，不擅自增加信息。';
  if(scenarioUnit())return `情境：${content.scene||content.zh||''}${content.intent?'\n想表达：'+content.intent:''}
-用日语“${lesson.expression}”回应是否自然、得体？${scope}先给结论和合适的日语回应，再用中文简要解释必要的词语、语法或语气，最多3点、每点一句。不适用时说明原因，不要硬套。`;
- const attempt=content.en?.trim()?`\n我的日语尝试：${content.en.trim()}\n请先核对并给出自然日语。`:'请给出一句自然日语。';
+用日语“${lesson.expression}”回应是否自然、得体？${scope}先给结论和合适的日语回应，再用中文简要解释必要的词语、语法或语气；根据情境解释清楚，保持精炼。不适用时说明原因，不要硬套。`;
+ const attempt=content.en?.trim()?`\n我的日语尝试：${content.en.trim()}\n请先核对并给出自然日语。`:'请给出自然、完整的日语表达。';
  return `意思：${content.zh||''}
 必须使用“${lesson.expression}”，可按语境调整时态、否定、活用和普通／礼貌语体。${scope}${attempt}
-再用中文简要解释关键词语／搭配及助词、活用或句式中实际用到的语法，最多3点、每点一句；不适用时简短说明，不要硬套。`;
+再用中文解释关键词语／搭配及助词、活用或句式中实际用到的语法，根据句子的长度和难点展开，复杂结构可分段拆解，讲清楚且保持精炼；语块不适用时说明原因，不要硬套。`;
 }
 function personalCheckControl(id=''){
  const ready=id|| (scenarioUnit()?state.draft.scene?.trim():state.draft.zh?.trim());

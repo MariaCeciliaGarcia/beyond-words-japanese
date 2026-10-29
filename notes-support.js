@@ -17,9 +17,9 @@ function noteOwner(kind,id=''){
 }
 function noteValue(kind,id=''){return noteOwner(kind,id)?.note?.text||'';}
 function noteHeading(kind,id=''){
- if(kind==='unit')return noteContext()?.q?.id?.startsWith('c-')?'语块笔记':'我的笔记';
+ if(kind==='unit')return '语块笔记';
  const item=kind==='custom'?state.custom.find(c=>c.id===id):null;
- return (item?.kind==='scenario'||scenarioUnit())?'这个场景的笔记':'这条例句的笔记';
+ return (item?.kind==='scenario'||scenarioUnit())?'场景笔记':'例句笔记';
 }
 function saveNoteText(kind,id,text){
  const owner=noteOwner(kind,id);if(!owner||typeof text!=='string'||text.length>noteLimit)return false;
@@ -30,17 +30,17 @@ function noteIcon(){return '<svg class="ui-icon" viewBox="0 0 24 24" fill="none"
 function noteAttrs(kind,id,surface){return `data-note-kind="${esc(kind)}" data-note-id="${esc(id)}" data-note-surface="${esc(surface)}" data-note-lesson="${esc(lesson.id)}"`;}
 function noteEditorMarkup(kind,id,surface){
  const field='note-'+surface+'-'+kind+'-'+(id||'current');
- return `<div class="note-editor"><label class="note-title" for="${esc(field)}">${noteIcon()}${noteHeading(kind,id)}</label><textarea id="${esc(field)}" class="note-input" data-note-editor="true" ${noteAttrs(kind,id,surface)} maxlength="${noteLimit}" rows="4" placeholder="写下容易忘记、下次想提醒自己的要点。">${esc(noteValue(kind,id))}</textarea><div class="note-editor-footer"><span class="note-save-status" role="status">输入后自动保存</span>${button('写好了','notes-done','text-button',noteAttrs(kind,id,surface))}</div></div>`;
+ return `<div class="note-editor"><label class="note-title" for="${esc(field)}">${noteIcon()}${noteHeading(kind,id)}</label><textarea id="${esc(field)}" class="note-input" data-note-editor="true" ${noteAttrs(kind,id,surface)} maxlength="${noteLimit}" rows="4" placeholder="写下容易忘记、下次想提醒自己的要点。">${esc(noteValue(kind,id))}</textarea><div class="note-editor-footer"><span class="note-save-status" role="status">输入后自动保存</span>${button('收起笔记','notes-done','text-button',noteAttrs(kind,id,surface))}</div></div>`;
 }
 function notePanel(kind,id='',surface='question',qs=null,after=true){
  const text=noteValue(kind,id),key=noteKey(kind,id),attrs=noteAttrs(kind,id,surface);
  const editing=surface==='question'?qs?.noteEditing===key:openPersonalNoteEditors.has(lesson.id+':'+surface+':'+key);
  if(editing)return `<section class="personal-note is-editing" ${attrs}>${noteEditorMarkup(kind,id,surface)}</section>`;
  if(!after&&!text.trim())return '';
- if(!text.trim())return `<section class="personal-note is-empty" ${attrs}>${button(kind==='unit'?'记个要点':noteHeading(kind,id),'notes-edit','note-add',attrs)}</section>`;
+ if(!text.trim())return `<section class="personal-note is-empty" ${attrs}>${button('添加笔记','notes-edit','note-add',attrs+` aria-label="添加笔记：${noteHeading(kind,id)}"`)}</section>`;
  const opened=after||!!qs?.notesOpen?.[key],full=!!qs?.notesFull?.[key];
  const long=text.length>60||text.split('\n').length>3;
- return `<section class="personal-note ${after?'':'is-reminder'}" ${attrs}><div class="note-header">${after?`<span class="note-title">${noteIcon()}${noteHeading(kind,id)}</span>${button('编辑','notes-edit','text-button',attrs)}`:button(`${noteIcon()}${noteHeading(kind,id)}<span class="note-toggle-label">${opened?'收起':'展开'}</span>`,'notes-toggle','note-reminder-toggle',attrs+` aria-expanded="${opened}"`)}</div>${opened?`<p class="note-copy ${full?'is-full':''}">${esc(text)}</p>${long?button(full?'收起全文':'展开全文','notes-more','text-button',attrs+` aria-expanded="${full}"`):''}`:''}</section>`;
+ return `<section class="personal-note ${after?'':'is-reminder'}" ${attrs}><div class="note-header">${after?`<span class="note-title">${noteIcon()}${noteHeading(kind,id)}</span>${button('编辑笔记','notes-edit','text-button',attrs)}`:button(`${noteIcon()}${noteHeading(kind,id)}<span class="note-toggle-label">${opened?'收起':'展开'}</span>`,'notes-toggle','note-reminder-toggle',attrs+` aria-expanded="${opened}"`)}</div>${opened?`<p class="note-copy ${full?'is-full':''}">${esc(text)}</p>${long?button(full?'收起全文':'展开全文','notes-more','text-button',attrs+` aria-expanded="${full}"`):''}`:''}</section>`;
 }
 function questionNotesMarkup(q,qs,context,after=true){
  if(!after&&context!=='review')return '';
@@ -83,7 +83,7 @@ function handleNoteInput(event){
  const el=event.target;if(!el.dataset?.noteEditor)return false;if(el.dataset.noteLesson!==lesson.id)return true;
  const ok=saveNoteText(el.dataset.noteKind,el.dataset.noteId||'',el.value);
  const status=el.closest('.note-editor')?.querySelector('.note-save-status');
- if(status){const message=ok?'已自动保存':'暂未保存，请先导出备份';if(status.textContent!==message)status.textContent=message;status.classList.toggle('save-failed',!ok);}
+ if(status){const message=ok?'已自动保存':'暂未保存，请勿关闭页面';if(status.textContent!==message)status.textContent=message;status.classList.toggle('save-failed',!ok);}
  return true;
 }
 function handleNoteKeydown(event){
