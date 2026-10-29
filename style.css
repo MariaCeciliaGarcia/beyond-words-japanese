@@ -538,3 +538,16 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid #26
 .translation-check-tools .translation-check-help{margin:10px 0 0;font-size:13px;line-height:1.7;color:#58728d}
 @media(min-width:1120px) and (min-height:740px){.learning-scale .translation-check-actions>.button{min-height:54px;font-size:16px;padding:10px 12px}}
 @media(max-width:650px){.translation-check-actions{gap:10px}.translation-check-actions>.button{font-size:14px;padding:10px 8px}}
+
+/* Scope progress and the current round's results have distinct reading levels. */
+.completion-scope-progress{margin:20px 0;padding:16px 0;border-top:1px solid #dce6ef;border-bottom:1px solid #dce6ef;min-width:0}
+.completion-scope-progress .completion-scope-label{margin:0 0 10px;font-size:14px;font-weight:500;line-height:1.6;color:#49657e;overflow-wrap:anywhere}
+.completion-scope-counts{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 20px}
+.completion-scope-counts p{margin:0;font-size:15px;color:#49657e;white-space:nowrap}
+.completion-scope-counts strong{font-size:27px;line-height:1.2;font-weight:650;color:#244a6a;font-variant-numeric:tabular-nums}
+.completion-scope-counts>span{margin-left:auto;font-size:13px;line-height:1.6;color:#60778d;white-space:nowrap}
+.completion-scope-progress .library-progress-track{margin:12px 0 8px}
+.completion-scope-progress .completion-scope-detail{margin:0;font-size:12px;line-height:1.7;color:#60778d}
+.outcome-main .completion-round-label{margin:0;color:#58728d;font-size:13px;font-weight:500;line-height:1.6}
+.outcome-main .completion-round-label+.stats{margin-top:10px}
+@media(max-width:650px){.completion-scope-counts{gap:6px 18px}.completion-scope-counts>span{flex-basis:100%;margin-left:0}.completion-scope-counts strong{font-size:25px}.completion-scope-progress{margin:18px 0;padding:14px 0}}

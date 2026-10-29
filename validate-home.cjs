@@ -26,3 +26,22 @@ const {setup}=require('./validate.cjs');
  assert(hr("ceciliaNavigation().includes('更新于')&&!ceciliaNavigation().includes('按日期学习')"));
  console.log('PASS: fixed home philosophy, symmetric four actions, empty/resume states, notes preserved, precise unique scope/date progress and library update labels.');
 }
+
+// Completion reports its original scope, includes this round, and excludes skipped-only work.
+{
+ const env=setup(),run=env.run;
+ run(`var completionGroup=catalog.scenes.find(g=>g.children.flatMap(c=>c.units).filter(id=>unitById.get(id)?.domains.includes('daily')).length>=4);var completionScope={domain:'daily',tab:'scene',filter:completionGroup.id,subfilter:'all',search:''};var completionIds=learningSelection(completionScope).map(u=>u.id);completionScope.ids=[...completionIds,completionIds[0]];selectLesson(completionIds[1]);state.mastered=true;save();selectLesson(completionIds[2]);state.learn=newLearning();state.learn.stage='done';state.learn.results=[{id:'l1',grade:'skip'}];save();selectLesson(completionIds[0]);state.learn=newLearning();state.learn.origin=completionScope;state.learn.results=[{id:'l1',grade:'good',help:false}];view='study';finishLearning()`);
+ let data=run('completionScopeProgressData()');assert.equal(data.progress.total,run('completionIds.length'));assert.equal(data.finished,2);assert.equal(data.remaining,data.progress.total-2);assert.equal(data.progress.skipped,1);
+ assert(run('app.innerHTML').includes('当前范围学习进度'));assert(run('app.innerHTML').includes('本组练习表现'));
+ run("domain='work';filter='all';search='unrelated UI filter'");assert.equal(run('completionScopeProgressData().label'),data.label);assert.equal(run('completionScopeProgressData().finished'),2);
+ run("state.learn.results=[{id:'l1',grade:'skip'}];finishLearning()");assert.equal(run('completionScopeProgressData().finished'),1);
+ run('for(const id of completionIds)store.records[id]={...record(id),mastered:true}');assert.equal(run('completionScopeProgressData().remaining'),0);
+}
+// Daily completion is per date: global mastery alone and date skips do not finish that date.
+{
+ const env=setup(),run=env.run;
+ run(`var completionDailyIds=units.filter(u=>u.domains.includes('daily')).slice(0,4).map(u=>u.id);window.BW_JP_DAILY_MATERIALS=[{id:'2026-10-28',date:'2026-10-28',items:[...completionDailyIds,completionDailyIds[0]].map((id,i)=>({id:'completion-fixture-'+i,expression:unitById.get(id).expression,meaning:unitById.get(id).meaning,unitId:id,kind:'expression'}))}];selectLesson(completionDailyIds[1]);state.mastered=true;save();selectLesson(completionDailyIds[2]);state.dailyVisits={'2026-10-28':{status:'skip',at:Date.now()}};save();selectLesson(completionDailyIds[3]);state.dailyVisits={'2026-10-28':{status:'mastered',at:Date.now()}};save();selectLesson(completionDailyIds[0]);state.learn=newLearning();state.learn.origin=currentDayOrigin('2026-10-28');state.learn.results=[{id:'l1',grade:'good',help:false}];view='study';finishLearning()`);
+ const data=run('completionScopeProgressData()');assert.equal(data.progress.total,4);assert.equal(data.finished,2);assert.equal(data.remaining,2);assert(data.label.includes('2026年10月28日'));
+ run("domain='work';filter='all';search='changed after finishing'");assert.equal(run('completionScopeProgressData().label'),data.label);
+}
+console.log('PASS: completion scope totals, current-round inclusion, original category/date, unique expressions, mastery, skipped-only rounds and finished scopes.');

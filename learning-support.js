@@ -111,6 +111,21 @@ function libraryProgress(ids,day){
  }
  return p;
 }
+function completionScopeProgressData(){
+ const origin=learningOrigin(),day=isCeciliaOrigin(origin)?originDay(origin):null;
+ const meta=catalog.domains.find(d=>d.id===origin.domain);
+ const groups=origin.tab==='scene'?catalog.scenes:catalog.functions;
+ const group=groups.find(g=>g.id===origin.filter),sub=group?.children.find(c=>c.id===origin.subfilter);
+ const label=day?[meta?.name,ceciliaDateLabel(day)].filter(Boolean).join(' · '):[meta?.name||'当前板块',group&&(group.nameByDomain?.[origin.domain]||group.name),sub?.name,origin.search?.trim()?`筛选“${origin.search.trim()}”`:null].filter(Boolean).join(' · ');
+ const ids=day?ceciliaIds(day):([...(origin.ids||[]),...learningSelection(origin).map(u=>u.id)]).filter(id=>unitById.get(id)?.domains.includes(origin.domain));
+ const progress=libraryProgress(ids,day),finished=progress.completed+progress.mastered;
+ return {label,day,progress,finished,remaining:progress.total-finished};
+}
+function completionScopeProgressMarkup(){
+ const {label,progress:p,finished,remaining}=completionScopeProgressData();
+ const pc=n=>p.total?100*n/p.total:0;
+ return `<section class="completion-scope-progress" aria-label="当前范围学习进度"><p class="completion-scope-label">${esc(label)}</p><div class="completion-scope-counts"><p>已完成 <strong>${finished}</strong> 个</p><p>还剩 <strong>${remaining}</strong> 个</p><span>共 ${p.total} 个表达</span></div><div class="library-progress-track" role="progressbar" aria-label="当前范围已完成表达" aria-valuemin="0" aria-valuemax="${p.total||1}" aria-valuenow="${finished}" aria-valuetext="共 ${p.total} 个表达，已完成 ${finished} 个，还剩 ${remaining} 个"><span class="progress-learned" style="width:${pc(p.completed)}%"></span><span class="progress-mastered" style="width:${pc(p.mastered)}%"></span></div><p class="completion-scope-detail">已学完 ${p.completed} · 已掌握 ${p.mastered}${p.skipped?` · 已略过 ${p.skipped}（未计入完成）`:''}</p></section>`;
+}
 function libraryProgressMarkup(ids,day){
  const p=libraryProgress(ids,day),finished=p.completed+p.mastered,pc=n=>p.total?100*n/p.total:0;
  return `<section class="library-progress" aria-label="${day?'当天':'当前库'}学习与复习进度"><div class="library-learning-progress"><div class="library-progress-heading"><h2>学习进度</h2><p><strong>${finished}</strong><span> / ${p.total} 个表达</span></p></div><div class="library-progress-track" role="progressbar" aria-label="已学完或已掌握的表达" aria-valuemin="0" aria-valuemax="${p.total||1}" aria-valuenow="${finished}" aria-valuetext="已学完 ${p.completed}，已掌握 ${p.mastered}，共 ${p.total} 个表达"><span class="progress-learned" style="width:${pc(p.completed)}%"></span><span class="progress-mastered" style="width:${pc(p.mastered)}%"></span></div><div class="library-progress-legend"><span>已学完 <b>${p.completed}</b></span><span>已掌握 <b>${p.mastered}</b></span><span>学习中 <b>${p.active}</b></span>${p.skipped?`<span>已略过 <b>${p.skipped}</b></span>`:''}</div></div><div class="library-review-progress"><h2>复习安排</h2><div><span>已到期 <strong>${p.due}</strong> 个</span><span>未完成 <strong>${p.pendingReview}</strong> 轮</span></div></div></section>`;
