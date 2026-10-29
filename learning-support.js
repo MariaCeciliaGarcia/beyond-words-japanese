@@ -10,11 +10,11 @@ function expressionHint(q){
 function personalCheckPrompt(content){
  const scope='结合场景和人物关系判断礼貌程度，保留原意，不擅自增加信息。';
  if(scenarioUnit())return `情境：${content.scene||content.zh||''}${content.intent?'\n想表达：'+content.intent:''}
-用日语“${lesson.expression}”回应是否自然、得体？${scope}先给结论和合适的日语回应，再用中文简要解释必要的词语、语法或语气；根据情境解释清楚，保持精炼。不适用时说明原因，不要硬套。`;
+用日语“${lesson.expression}”回应是否自然、得体？${scope}先给结论和合适的日语回应，再用中文简要解释回应中其他必要的词语、语法或语气，保持精炼。我已经熟悉正在练习的目标表达“${lesson.expression}”，不要重复解释它本身的意思、基本用法或对应知识点。解释只针对句中其他值得学习的词语、搭配和语法；若没有其他需要解释的内容，无需另加讲解。若目标表达在本句中使用有误或不适用，只指出具体问题及必要的修改理由，不展开复习它本身。`;
  const attempt=content.en?.trim()?`\n我的日语尝试：${content.en.trim()}\n请先核对并给出自然日语。`:'请给出自然、完整的日语表达。';
  return `意思：${content.zh||''}
 必须使用“${lesson.expression}”，可按语境调整时态、否定、活用和普通／礼貌语体。${scope}${attempt}
-再用中文解释关键词语／搭配及助词、活用或句式中实际用到的语法，根据句子的长度和难点展开，复杂结构可分段拆解，讲清楚且保持精炼；语块不适用时说明原因，不要硬套。`;
+再用中文解释句中其他关键词语／搭配及助词、活用或句式中实际用到的语法，根据句子的长度和难点展开，复杂结构可分段拆解，讲清楚且保持精炼。我已经熟悉正在练习的目标表达“${lesson.expression}”，不要重复解释它本身的意思、基本用法或对应知识点。解释只针对句中其他值得学习的词语、搭配和语法；若没有其他需要解释的内容，无需另加讲解。若目标表达在本句中使用有误或不适用，只指出具体问题及必要的修改理由，不展开复习它本身。`;
 }
 function personalCheckControl(id=''){
  const ready=id|| (scenarioUnit()?state.draft.scene?.trim():state.draft.zh?.trim());
