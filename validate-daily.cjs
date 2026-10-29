@@ -68,7 +68,7 @@ assert.equal(r('state.learn.origin.domain'),'work');assert.equal(r('state.learn.
 assert.equal(r('state.learn.pendingDailyDate'),'2026-10-28');assert.equal(r("dateLearningPending('jp-teoku','2026-10-28')"),true);
 r("state.learn.stage='custom';finishLearning()");
 assert.equal(r("dateLearningPending('jp-teoku','2026-10-28')"),true);
-assert(r('pendingDailyContinuation()').includes('继续当天学习'));
+assert(r('pendingDailyContinuation()').includes('继续学习'));
 // Same protection for a round that originally belongs to another date.
 r("selectLesson('jp-yoyuu');state.mastered=false;state.learn=newLearning();state.learn.origin=currentDayOrigin('2026-10-28');state.learn.q.input='原日期草稿';delete state.dailyVisits['2026-10-29'];save();openCeciliaUnit('jp-yoyuu','2026-10-29',true)");
 assert.equal(r('state.learn.origin.dateId'),'2026-10-28');assert.equal(r('state.learn.q.input'),'原日期草稿');
