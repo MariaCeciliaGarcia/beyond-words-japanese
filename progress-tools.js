@@ -16,7 +16,7 @@ function loadStoredProgress(){
  if(mainRaw||recoveryRaw){progressReadOnly=true;damagedProgress=mainRaw||recoveryRaw;progressIssue='原进度暂时无法读取，已停止覆盖。请导入有效备份，或先导出原始数据。';storageNotice(progressIssue);}
  return null;
 }
-function recordHasProgress(r){return !!(r&&(r.userModified||r.note?.updatedAt||r.draft?.note?.updatedAt||Object.keys(r.dailyVisits||{}).length||r.enrolled||r.mastered||r.learn||r.review||r.custom?.length||r.history?.length||r.draft&&Object.values(r.draft).some(v=>typeof v==='string'&&v.trim())));}
+function recordHasProgress(r){return !!(r&&(r.userModified||Object.values(r.questionNotes||{}).some(n=>n.note?.updatedAt)||r.note?.updatedAt||r.draft?.note?.updatedAt||Object.keys(r.dailyVisits||{}).length||r.enrolled||r.mastered||r.learn||r.review||r.custom?.length||r.history?.length||r.draft&&Object.values(r.draft).some(v=>typeof v==='string'&&v.trim())));}
 function mergeProgressRecords(local,remote){
  const out={...local};for(const [id,r]of Object.entries(remote||{}))if(!out[id]||!recordHasProgress(out[id])&&recordHasProgress(r)||(recordHasProgress(r)||!recordHasProgress(out[id]))&&Number(r.updatedAt||0)>Number(out[id].updatedAt||0))out[id]=r;return out;
 }
@@ -62,7 +62,7 @@ function installProgressRuntime(data){
  const context=store.ui||{};domain=catalog.domains.some(d=>d.id===context.domain)?context.domain:lesson.domain;tab=['scene','function'].includes(context.tab)?context.tab:'scene';filter=typeof context.filter==='string'?context.filter:'all';subfilter=typeof context.subfilter==='string'?context.subfilter:'all';search=typeof context.search==='string'?context.search:'';page=Number(context.page)||1;lastSpoken=context.lastSpoken||'daily';lastExam=context.lastExam||'ielts';view='home';
  progressSignatures.clear();locallyEditedProgress.clear();for(const [id,r]of Object.entries(store.records))progressSignatures.set(id,progressSignature(r));
 }
-function progressCounts(data){const all=Object.values(data.records||{});return {learning:all.filter(r=>r.learn&&r.learn.stage!=='done'&&!r.mastered).length,review:all.filter(r=>r.enrolled&&!r.mastered).length,mastered:all.filter(r=>r.mastered).length,custom:all.reduce((n,r)=>n+(r.custom?.length||0),0),notes:all.reduce((n,r)=>n+Number(!!r.note?.text?.trim())+Number(!!r.draft?.note?.text?.trim())+(r.custom||[]).filter(c=>c.note?.text?.trim()).length,0)};}
+function progressCounts(data){const all=Object.values(data.records||{});return {learning:all.filter(r=>r.learn&&r.learn.stage!=='done'&&!r.mastered).length,review:all.filter(r=>r.enrolled&&!r.mastered).length,mastered:all.filter(r=>r.mastered).length,custom:all.reduce((n,r)=>n+(r.custom?.length||0),0),notes:all.reduce((n,r)=>n+Object.values(r.questionNotes||{}).filter(n=>n.note?.text?.trim()).length+Number(!!r.note?.text?.trim())+Number(!!r.draft?.note?.text?.trim())+(r.custom||[]).filter(c=>c.note?.text?.trim()).length,0)};}
 function progressBackup(){return {format:'beyondwords-japanese-progress',formatVersion:1,exportedAt:new Date().toISOString(),source:location.origin||'当前浏览器',data:JSON.parse(JSON.stringify(store))};}
 function downloadProgressText(text,filename,mime='application/json'){
  const url=URL.createObjectURL(new Blob([text],{type:mime+';charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
@@ -87,6 +87,7 @@ function checkedProgress(data){
   const r={...emptyState(),...raw};if(!Number.isSafeInteger(r.cursor)||r.cursor<0||r.updatedAt!==undefined&&(!Number.isFinite(r.updatedAt)||r.updatedAt<0))throw Error('备份中的进度序号无法读取。');
   if(typeof r.enrolled!=='boolean'||typeof r.mastered!=='boolean'||!Array.isArray(r.custom)||!r.draft||typeof r.draft!=='object'||typeof r.draft.zh!=='string'||typeof r.draft.en!=='string')throw Error('备份中的个人内容无法读取。');
   if(!validPersonalNote(r.note)||!validPersonalNote(r.draft.note))throw Error('备份中的笔记无法读取。');
+  if(r.questionNotes!==undefined&&(!r.questionNotes||typeof r.questionNotes!=='object'||Array.isArray(r.questionNotes)||Object.entries(r.questionNotes).some(([key,item])=>!item||!validQuestion(item.question)||key!==questionNoteId(item.question)||!validPersonalNote(item.note))))throw Error('备份中的题目笔记无法读取。');
   if(!r.schedule||!Number.isFinite(r.schedule.due)||!Number.isInteger(r.schedule.streak)||r.schedule.streak<0||!Array.isArray(r.history))throw Error('备份中的复习安排无法读取。');
   for(const c of r.custom)if(!c||typeof c.id!=='string'||(c.kind==='scenario'?(typeof c.scene!=='string'||typeof c.intent!=='string'):(typeof c.zh!=='string'||typeof c.en!=='string')))throw Error('备份中的例句或场景不完整。');
   for(const c of r.custom)if(!validPersonalNote(c.note))throw Error('备份中的例句笔记无法读取。');

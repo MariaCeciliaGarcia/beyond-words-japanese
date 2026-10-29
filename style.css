@@ -571,3 +571,5 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid #26
 .outcome-next:not(.completion-next)>.continuation{flex:1;display:flex;flex-direction:column;justify-content:center;margin:0;padding:28px 0}
 .outcome-next:not(.completion-next)>.outcome-actions{margin-top:0;padding-top:22px;border-top:1px solid #dce6ef}
 @media(max-width:1119px){.outcome-next:not(.completion-next)>.continuation{flex:none;padding:24px 0}}
+
+.legacy-note-archive{margin-top:24px;padding-top:18px;border-top:1px solid #dce6ef}.legacy-note-archive>.small{margin:12px 0 8px}.legacy-note-archive>.note-copy{font-size:16px;line-height:1.75}

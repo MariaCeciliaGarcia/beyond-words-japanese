@@ -1,15 +1,35 @@
 'use strict';
-// A unit note travels with the expression; a personal note travels only with its example/scene.
+// Authored-question notes follow the actual task; personal notes follow their example/scene. Legacy unit notes stay archived.
 const openPersonalNoteEditors=new Set();
 const noteLimit=10000;
 function noteKey(kind,id=''){return kind+':'+id;}
 function noteContext(){
  const c=currentContext();
  if(c)return c;
- if(view==='study'&&state.learn?.stage==='intro')return {q:state.learn.pinnedEntry||lesson.entry,qs:state.learn.entryAttempt||state.learn.q,context:'entry'};
+ if(view==='study'&&state.learn?.stage==='intro'){
+  const l=state.learn;
+  if(l.returnStage==='review'&&state.review)return {q:reviewQuestion(),qs:state.review.q,context:'review'};
+  if(l.returnStage==='exercise')return {q:(l.pinnedLearning||lesson.learning)[l.index],qs:l.q,context:'learn'};
+  return {q:l.pinnedEntry||lesson.entry,qs:l.entryAttempt||l.q,context:'entry'};
+ }
  return null;
 }
-function noteOwner(kind,id=''){
+function questionNoteId(q){
+ return 'q-'+encodeURIComponent(JSON.stringify([q.type||'input',q.zh,q.target||q.zh,q.scene||'',q.dialogue||'',q.intent||'',q.stem||'']));
+}
+function legacyNoteMarkup(){
+ const text=state.note?.text;
+ if(!text?.trim())return '';
+ return `<details class="legacy-note-archive"><summary>旧版笔记（来源未记录）</summary><p class="small">旧版没有记录所属题目，原文保留在这里。可复制到对应题目的笔记中。</p><p class="note-copy is-full">${esc(text)}</p></details>`;
+}
+function noteOwner(kind,id='',create=false){
+ if(kind==='question'){
+  if(state.questionNotes?.[id])return state.questionNotes[id];
+  const q=noteContext()?.q;
+  if(!create||!q||questionNoteId(q)!==id)return null;
+  state.questionNotes=state.questionNotes||{};
+  return state.questionNotes[id]={question:JSON.parse(JSON.stringify(q))};
+ }
  if(kind==='unit')return state;
  if(kind==='draft')return state.draft;
  if(kind==='custom')return state.custom.find(c=>c.id===id)||null;
@@ -17,12 +37,13 @@ function noteOwner(kind,id=''){
 }
 function noteValue(kind,id=''){return noteOwner(kind,id)?.note?.text||'';}
 function noteHeading(kind,id=''){
- if(kind==='unit')return '语块笔记';
+ if(kind==='question')return '笔记';
+ if(kind==='unit')return '旧版笔记';
  const item=kind==='custom'?state.custom.find(c=>c.id===id):null;
  return (item?.kind==='scenario'||scenarioUnit())?'场景笔记':'例句笔记';
 }
 function saveNoteText(kind,id,text){
- const owner=noteOwner(kind,id);if(!owner||typeof text!=='string'||text.length>noteLimit)return false;
+ const owner=noteOwner(kind,id,true);if(!owner||typeof text!=='string'||text.length>noteLimit)return false;
  owner.note={text,updatedAt:Math.max(Date.now(),Number(owner.note?.updatedAt||0)+1)};
  const ok=save();return !!ok&&noteValue(kind,id)===text;
 }
@@ -45,9 +66,9 @@ function notePanel(kind,id='',surface='question',qs=null,after=true){
 function questionNotesMarkup(q,qs,context,after=true){
  if(!after&&context!=='review')return '';
  const item=q.id?.startsWith('c-')&&state.custom.find(c=>c.id===q.id);
- const unit=(!item||noteValue('unit').trim())?notePanel('unit','','question',qs,after):'';
- return `<div class="question-notes">${unit}${item?notePanel('custom',item.id,'question',qs,after):''}</div>`;
+ return `<div class="question-notes">${item?notePanel('custom',item.id,'question',qs,after):notePanel('question',questionNoteId(q),'question',qs,after)}</div>`;
 }
+function introQuestionNotesMarkup(){const c=noteContext();return c?.q?questionNotesMarkup(c.q,c.qs,c.context,c.context!=='review'||!!c.qs.revealed):'';}
 function personalDraftNotes(){return notePanel('draft','','draft');}
 function personalItemNotes(c){return notePanel('custom',c.id,'list');}
 function personalEditNotes(id){return notePanel(id?'custom':'draft',id||'','dialog');}
@@ -55,7 +76,7 @@ function copiedDraftNote(){return state.draft.note?{note:JSON.parse(JSON.stringi
 function handleNotesAction(action,el){
  if(!action.startsWith('notes-'))return false;
  const {noteKind:kind,noteId:id='',noteSurface:surface,noteLesson:unit}=el.dataset;
- if(unit!==lesson.id||!noteOwner(kind,id))return true;
+ if(unit!==lesson.id||!noteOwner(kind,id,true))return true;
  const ctx=noteContext(),qs=ctx?.qs,key=noteKey(kind,id),editorKey=lesson.id+':'+surface+':'+key;
  if(action==='notes-toggle'){
   if(!qs)return true;qs.notesOpen=qs.notesOpen||{};qs.notesOpen[key]=!qs.notesOpen[key];
