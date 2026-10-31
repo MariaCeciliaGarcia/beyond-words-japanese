@@ -117,3 +117,11 @@ AI核对指令默认学习者已熟悉目标表达，不重复讲解其意思、
 - 最新纠正：练习中的“笔记”属于当前具体题目，不属于整个语块。原生题目写入record.questionNotes，以实际题意、情境、目标、题干和题型组成稳定身份；不能仅用entry/l1/r1等重复题号。真正同一道题跨初试／学习／复习可找回，其他题目与改过题面的旧轮次隔离。个人例句／场景仍各自持有笔记。
 - 题目笔记标题为“笔记”，保留自动保存、全宽左对齐、复习前折叠、提前阅读计借助笔记、核对后展示、键盘及备份恢复。完成／复习小结／掌握页不再展示或创建全语块笔记。
 - 旧版record.note没有题目来源，保留原文与备份；仅在个人例句／场景详情的“旧版笔记（来源未记录）”折叠区查看，不猜测归题，不自动展示在任何练习题里。
+
+## 与英语 1.17.0／1.18.0 同步（jp-0.7.0）
+
+- 本次授权将英语 1.17.0 与 1.18.0 的全部功能同步到日语：笔记格式（note.runs）、AI 指令首次完整之后简短、学习进度节点只读回看、学习库两级页面（listOpen）、小水獭心情打卡、学习日历、结束今天的学习、反馈横幅与选错标记、保存页保留编辑删除入口。只同步界面与功能，不复制英语内容、数据或存储。
+- journal-support.js 与英语版同源：store.journal[YYYY-MM-DD]={mood,moodAt,sec,expr,rev,endedAt}，经 cleanJournal 清洗，跨标签用 mergeJournal 合并；学习时间只累计有操作的时间（闲置超过 2 分钟不计），只在学习日历里显示，鼓励窗口不写分钟。存储键仍为 beyondwords.japanese.v1。
+- 日语版的差异：自建场景仍只有一栏（无“态度”栏）；AI 指令用日语措辞（助词、活用、礼貌程度）；回看与例句的日语文字标 lang="ja"；个人日期范围是 moena。
+- 小水獭目前是临时矢量版，用户计划提供按原稿风格生成的三张图，到位后替换 otterSVG；三只动作周期 0.9 秒、幅度约 5px。
+- 运行 validate.cjs、validate-daily.cjs、validate-home.cjs、validate-keyboard.cjs、validate-notes.cjs，以及新增的 validate-format.cjs、validate-journal.cjs、validate-recap.cjs。

@@ -70,6 +70,7 @@
  }
  function handleKeyboardSupport(event){
   if(event.key==='Tab'){tabMoving=true;deliberateDialogFocus=null;return;}
+  if(typeof handleNoteFormatKeydown==='function'&&handleNoteFormatKeydown(event))return;
   if(event.key!=='Enter')return;
   if(event.defaultPrevented)return;
   if(typeof handleNoteKeydown==='function'&&handleNoteKeydown(event))return;
