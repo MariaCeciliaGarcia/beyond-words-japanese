@@ -41,7 +41,7 @@ return `请核对下面这道日语表达练习。\n${fields.map(([label,text])=
 }
 function translationCheckControls(q,qs,editAction='edit-answer'){
  if(questionType(q)!=='input'||!qs.checked||!qs.revealed||!qs.input?.trim())return '';
- return `<div class="translation-check-tools"><div class="actions translation-check-actions">${button('修改再试',editAction,'button secondary')}${button('复制 AI 核对指令','copy-translation-check','button secondary')}</div><p class="small translation-check-help">复制后粘贴发送给 AI，核对你的表达是否正确、自然。同一个 AI 对话里，第一次复制完整要求，之后只复制本题内容。${aiFullButton('translation','copy-translation-check-full')}</p></div>`;
+ return `<div class="translation-check-tools"><div class="actions translation-check-actions">${button('修改再试',editAction,'button secondary')}${button('我答对了','mark-correct','button secondary')}${button('复制 AI 核对指令','copy-translation-check','button secondary')}</div><p class="small translation-check-help">复制后粘贴发送给 AI，核对你的表达是否正确、自然。同一个 AI 对话里，第一次复制完整要求，之后只复制本题内容。${aiFullButton('translation','copy-translation-check-full')}</p></div>`;
 }
 async function copyTranslationCheck(forceFull=false){
  const c=currentContext()||(view==='study'&&state.learn?.stage==='intro'?{q:state.learn.pinnedEntry||lesson.entry,qs:state.learn.entryAttempt||state.learn.q}:null);

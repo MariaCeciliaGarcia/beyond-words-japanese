@@ -11,8 +11,17 @@
  const action = button => button?.dataset?.action||'';
  function openDialog(){const d=document.getElementById('dialog');return d?.open?d:null;}
  function editingButton(root){for(const name of editActions){const b=query(root,`[data-action="${name}"]`);if(visible(b))return b;}return null;}
+ // 自建页：所有输入框都没有内容时，Enter 给“稍后再写”，不是保存（保存需要内容；有内容时仍用 ⌘/Ctrl+Enter）。
+ function emptyCustomLater(root){
+  if(!editingButton(root))return null;
+  const fields=all(root,'#custom-zh,#custom-en,#custom-scene,#custom-intent');
+  if(!fields.length||fields.some(f=>String(f.value||'').trim()))return null;
+  const later=query(root,'[data-action="finish-learn"]');
+  return visible(later)?later:null;
+ }
  function keyboardDefaultButton(root=document.getElementById('app')){
   if(openDialog())return null;
+  const emptyLater=emptyCustomLater(root);if(emptyLater)return emptyLater;
   const explicitlyMarked=query(root,'[data-enter-default]');
   if(visible(explicitlyMarked)&&safeDefaults.has(action(explicitlyMarked)))return explicitlyMarked;
   for(const selector of ['[data-action="grade"][data-grade="good"]','[data-action="choice-next"]','[data-action="entry-intro"]','[data-action="intro-next"]','[data-action="check"]','[data-action="next-learning"]','[data-action="next-review"]','[data-action="cecilia-next"]','[data-action="daily-next"]','[data-action="continue-date-learning"]','[data-action="continue-date-review"]','[data-action="daily-continue"]','[data-action="daily-review"]']){
@@ -90,6 +99,7 @@
    return;
   }
   if(control)return; // Tab then Enter follows that deliberately focused control.
+  if(editable&&/^custom-(zh|en|scene|intent)$/.test(target.id||'')){const later=emptyCustomLater(root);if(later){event.preventDefault();later.click();return;}}
   if(editable&&target.id!=='answer')return; // Personal multiline inputs retain Enter/newlines.
   if(target?.id==='answer'){
    const text=String(target.value||'').trim();

@@ -15,6 +15,15 @@ h.buttons.clear();const good=h.button('grade','good');const hard=h.button('grade
 assert(h.event({}, {repeat:true}).prevented);assert(!h.event({}, {isComposing:true}).prevented);assert(!h.event({}, {keyCode:229}).prevented);assert.equal(h.clicks.length,n);
 h.handlers.compositionstart();assert(!h.event({}).prevented);h.handlers.compositionend();assert(h.event({}).prevented);h.tick(200);h.event({});assert.equal(h.clicks.length,n+1);
 const custom={id:'custom-en',tagName:'TEXTAREA',value:'a\nb',closest:()=>null};assert(!h.event(custom).prevented);assert.equal(h.clicks.length,n+1);h.buttons.clear();h.button('save-custom');h.event(custom,{metaKey:true});assert.equal(h.clicks.at(-1),'save-custom');h.event(custom,{ctrlKey:true});assert.equal(h.clicks.at(-1),'save-custom');
+// 自建页：输入框全空时 Enter 给“稍后再写”；有内容时 Enter 不保存（textarea 仍换行），⌘/Ctrl+Enter 才保存。
+{const fz={id:'custom-zh',tagName:'INPUT',value:'',closest:()=>null},fe={id:'custom-en',tagName:'TEXTAREA',value:'',closest:()=>null};
+ h.buttons.clear();h.button('save-custom');h.button('finish-learn');h.app.querySelectorAll=()=>[fz,fe];
+ let c=h.clicks.length;assert(h.event(fe).prevented);assert.equal(h.clicks.at(-1),'finish-learn');assert.equal(h.clicks.length,c+1);
+ c=h.clicks.length;assert(h.event(fz).prevented);assert.equal(h.clicks.at(-1),'finish-learn');
+ c=h.clicks.length;assert(h.event({},{}).prevented);assert.equal(h.clicks.at(-1),'finish-learn');
+ fz.value='想联系也联系不上';c=h.clicks.length;assert(!h.event(fe).prevented);assert.equal(h.clicks.length,c);
+ h.event(fe,{metaKey:true});assert.equal(h.clicks.at(-1),'save-custom');h.app.querySelectorAll=()=>[];}
+
 h.buttons.clear();h.button('grade','good');h.dialog.open=true;h.event({});assert.notEqual(h.clicks.at(-1),'grade:good');const danger=h.button('confirm-delete');assert(h.event(danger).prevented);h.event({}, {key:'Tab'});h.handlers.focusin({target:danger});assert(!h.event(danger).prevented);h.dialog.open=false;
 h.buttons.clear();h.ctx.currentContext=()=>({q:{type:'choice'}});h.button('choose-answer');assert(!h.event({}).prevented);h.buttons.clear();h.button('confirm-master');assert.equal(h.ctx.window.keyboardDefaultButton(),null);
 h.buttons.clear();h.button('grade','good');h.ctx.window.decorateKeyboardActions();assert.equal(h.buttons.get('grade:good').children[0].textContent,'↵');

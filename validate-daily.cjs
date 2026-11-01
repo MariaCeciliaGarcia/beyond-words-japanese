@@ -86,7 +86,7 @@ assert.equal(r("filterReviewScope(availableUnits(),{domain:'moena',dateId:'2026-
 r("selectLesson('jp-yoyuu');startCeciliaReview('2026-10-28');startReview();state.review.q.input='復習の入力';save();go('home');continueReviewHome()");
 assert.equal(r('view'),'practice');assert.equal(r('state.review.origin.dateId'),'2026-10-28');
 assert.equal(r('state.review.q.input'),'復習の入力');
-assert(r('state.review.pinnedQuestions?.length===5'));
+assert(r('state.review.pinnedQuestions?.length===3'));
 // Marking mastery while reviewing a date touches the review date, not a previous learn date.
 r("state.learn.origin=currentDayOrigin('2026-10-29');markDailyVisit('mastered')");
 assert.equal(r("state.dailyVisits['2026-10-28'].status"),'mastered');

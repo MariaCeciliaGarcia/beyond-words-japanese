@@ -19,7 +19,8 @@ const click=(action,extra={})=>env.handlers.click({target:{closest:s=>s.startsWi
 const total=r('units.length');assert(total>=60,'The library needs real breadth');assert.equal(r('new Set(units.map(u=>u.id)).size'),total);assert.deepEqual(Array.from(r('window.BW_JP_CATALOG_AUDIT()')),[]);
 r(`for(const u of units){
  if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}$/.test(u.id))throw Error('Backup-incompatible ID '+u.id);
- if(u.learning.length!==5||u.review.length!==5)throw Error(u.id+' count');
+ if(u.practiceProfile==='compose'&&(u.learning.length!==3||u.review.length!==3))throw Error(u.id+' count');
+ if(u.practiceProfile==='scenario'&&(u.learning.length>2||u.review.length!==1||u.review[0].type!=='recall'))throw Error(u.id+' count');
  const all=[u.entry,...u.learning,...u.review];
  if(u.practiceProfile==='compose'&&all.some(q=>q.type!=='input'||q.stem))throw Error('Only full translation for '+u.id);
  for(const q of all){if(!q.scene||!q.target||!q.answers.length||!Array.isArray(q.lexicalHints)||!q.grammarHints?.length)throw Error('Question missing '+u.id+q.id);if(q.type==='choice'&&!q.choices.some(c=>c.id===q.correctChoice))throw Error('Choice mismatch');}
@@ -35,24 +36,26 @@ for(const id of r('units.map(u=>u.id)')){
   assert.equal(r('state.learn.stage'),'intro');assert(r('app.innerHTML').includes('entry-result-title'));
  }else{click('reveal');assert(r('app.innerHTML').includes('看看讲解'));click('entry-intro');}
  click('intro-next');assert.equal(r('state.learn.stage'),'exercise');
- for(let n=0;n<5;n++){
+ const learnCount=r('(state.learn.pinnedLearning||lesson.learning).length');
+ for(let n=0;n<learnCount;n++){
   const type=r('questionType(learningQuestion())');
   if(type==='choice'){click('choose-answer',{choice:r('learningQuestion().correctChoice')});assert(r('app.innerHTML').includes('判断正确'));click('choice-next');}
   else {if(type==='input'){r('state.learn.q.input=learningQuestion().answers[0]');click('check');assert(r('app.innerHTML').includes('答对了'));}else click('reveal');click('grade',{grade:'good'});}
  }
- assert.equal(r('state.learn.stage'),'custom');
- if(r('scenarioUnit()')){
-  assert.equal(r('(app.innerHTML.match(/id="custom-scene"/g)||[]).length'),1);
-  assert(!r('app.innerHTML').includes('id="custom-intent"'));
-  r("state.draft.scene='同事说周五居家办公，我第一次知道。'");click('save-scenario');
- }else{r("state.draft={zh:'周末有时间，可以慢慢聊。',en:'週末は余裕があるので、ゆっくり話せます。'}");click('save-custom');}
- assert.equal(r('state.custom.length'),1);assert(r('app.innerHTML').includes('继续创建'));
- click('continue-create');click('finish-learn');assert.equal(r('state.learn.stage'),'done');
+ if(r('scenarioUnit()')){ // 独立表达：不设自建场景，学完直接结束
+  assert.equal(r('state.learn.stage'),'done');assert.equal(r('state.custom.length'),0);assert(!r('app.innerHTML').includes('查看我的场景'));
+ }else{
+  assert.equal(r('state.learn.stage'),'custom');
+  r("state.draft={zh:'周末有时间，可以慢慢聊。',en:'週末は余裕があるので、ゆっくり話せます。'}");click('save-custom');
+  assert.equal(r('state.custom.length'),1);assert(r('app.innerHTML').includes('继续创建'));
+  click('continue-create');click('finish-learn');assert.equal(r('state.learn.stage'),'done');
+ }
  assert(r('app.innerHTML').includes('复习这个表达'));
  // Main review round, with persistent cursor moving through all 5 authored questions over successive rounds.
  for(let round=0;round<2;round++){
   click('start-review');assert.equal(r('view'),'practice');
-  for(let k=0;k<3;k++){
+  const reviewCount=r('state.review.queue.length');
+  for(let k=0;k<reviewCount;k++){
    const type=r('questionType(reviewQuestion())');
    if(type==='choice'){click('choose-answer',{choice:r('reviewQuestion().correctChoice')});click('choice-next');}
    else {if(type==='input'){r('state.review.q.input=reviewQuestion().answers[0]');click('check');}else click('reveal');click('grade',{grade:'good'});}

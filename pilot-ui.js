@@ -1,6 +1,7 @@
 'use strict';
 // The three approved learning profiles share navigation and storage with the library.
 function scenarioUnit(){return lesson.practiceProfile==='scenario';}
+function noCustomUnit(u=lesson){return u?.practiceProfile==='scenario';} // 独立表达不设自建场景，学完直接进入下一个
 function questionType(q){return q.type||(scenarioUnit()?'recall':'input');}
 function personalLabel(){return scenarioUnit()?'我的场景':'我的例句';}
 function draftPresent(){return scenarioUnit()?!!(state.draft.scene?.trim()||state.draft.intent?.trim()||state.draft.note?.text?.trim()):!!(state.draft.zh?.trim()||state.draft.en?.trim()||state.draft.note?.text?.trim());}
@@ -25,17 +26,17 @@ function pilotEntryFeedback(){
  if(!l||l.returnStage)return '';
  const attempt=l.entryAttempt||l.q,q=l.pinnedEntry||lesson.entry;
  if(questionType(q)!=='input'||!attempt||!attempt.revealed)return '';
- const correct=attempt.checked&&matches(attempt.input,q.answers),assisted=attempt.targetSeen||attempt.usedHint||attempt.exposed;
+ const correct=attempt.checked&&(attempt.selfCorrect||matches(attempt.input,q.answers)),assisted=attempt.targetSeen||attempt.usedHint||attempt.exposed;
  const title=correct?(assisted?'借助提示，答对了':'答对了！'):attempt.checked?'再对照一下刚才的表达':'先认识这个表达';
- const note=correct?'刚才这句话，你表达出来了。':attempt.checked?'对照下面的表达，检查结构、用词、助词和活用，再试一次。':'先看看刚才这句话可以怎么说。';
+ const note=correct?(attempt.selfCorrect?'按你的判断，这句话说对了。':'刚才这句话，你表达出来了。'):attempt.checked?'对照下面的表达，检查结构、用词、助词和活用，再试一次。':'先看看刚才这句话可以怎么说。';
  const path=correct?'m6 12 4 4 8-8':attempt.checked?'M12 6v8m0 4v.01':'M4 5h6l2 2 2-2h6v14h-6l-2 2-2-2H4Zm8 2v14';
  return `<div id="entry-feedback" class="entry-feedback entry-result ${correct?'entry-result-success':attempt.checked?'entry-result-neutral entry-result-attention':'entry-result-neutral'}" tabindex="-1" role="status" aria-label="${title}"><span class="entry-result-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="${path}" pathLength="1"/></svg></span><h2 class="entry-result-title">${title}</h2><p class="entry-result-note">${note}</p>${correct?`<p class="entry-result-answer" lang="ja">${esc(attempt.input)}</p>`:attempt.checked?expressionComparisonMarkup(attempt.input,q.answers[0]):`<p class="entry-result-answer" lang="ja">${esc(q.answers[0])}</p>`}${attempt.checked&&!correct?translationCheckControls(q,attempt,'edit-entry'):''}<div class="entry-result-utilities">${attempt.input?.trim()&&(!attempt.checked||correct)?button('返回修改','edit-entry','text-button entry-edit'):''}${questionNotesMarkup(q,attempt,'entry',true)}</div><p class="entry-result-next">${entryCreditQuestion()?'这题已计入进度，接下来换个情境练。':'接下来，看看这个表达怎么用。'}</p>${correct?`<div class="actions entry-result-actions">${button(entryCreditQuestion()?'继续练新题':'开始练习','intro-next')}</div>`:''}</div>`;
 }
 function entryCreditQuestion(){
  const l=state.learn;if(!l||l.returnStage)return null;
  const a=l.entryAttempt||l.q,e=l.pinnedEntry||lesson.entry;
- if(!a?.checked||!a.revealed||a.exposed||questionType(e)!=='input'||!matches(a.input,e.answers))return null;
- return (l.pinnedLearning||lesson.learning).find(q=>questionType(q)==='input'&&normalize(q.target||q.zh)===normalize(e.target||e.zh)&&normalize(q.stem||'')===normalize(e.stem||'')&&matches(a.input,q.answers))||null;
+ if(!a?.checked||!a.revealed||a.exposed||questionType(e)!=='input'||!(a.selfCorrect||matches(a.input,e.answers)))return null;
+ return (l.pinnedLearning||lesson.learning).find(q=>questionType(q)==='input'&&normalize(q.target||q.zh)===normalize(e.target||e.zh)&&normalize(q.stem||'')===normalize(e.stem||'')&&(a.selfCorrect||matches(a.input,q.answers)))||null;
 }
 function skipCreditedEntry(l){const questions=l.pinnedLearning||lesson.learning;while(l.index<questions.length&&questions[l.index].id===l.entryCreditId)l.index++;}
 function beginLearningExercises(){const l=state.learn,credit=entryCreditQuestion(),a=l.entryAttempt||l.q;l.stage='exercise';l.index=0;

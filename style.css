@@ -735,3 +735,33 @@ div.note-input.note-rich:empty::before{content:attr(data-placeholder);color:#7a8
 }
 @media(prefers-contrast:more){.breadcrumbs .breadcrumb-link,.context-copy{color:#244561}.feedback-attention,.feedback-incorrect{color:#70430f}.feedback-symbol{border-color:currentColor}}
 @media(prefers-reduced-transparency:reduce){.feedback-symbol{background:#e5edf5}.feedback-success .feedback-symbol{background:#e3f1e9}.feedback-attention .feedback-symbol,.feedback-incorrect .feedback-symbol{background:#faedd7}}
+
+/* 主题标题层级（与英语版 v1.18.0 一致，日语版此前漏同步） */
+/* Approved topic hierarchy: one clear title, then stage and progress. */
+.topic-session{padding:23px 28px 18px;background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,252,255,.96))}
+.topic-session .study-header{align-items:flex-start;gap:28px;min-height:0}
+.topic-session .session-title{min-width:0;flex:1}
+.topic-kicker{font-size:12px;font-weight:500;line-height:1.4;letter-spacing:1.2px;color:#52789b;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.topic-kicker:before{content:"";width:4px;height:13px;border-radius:2px;background:linear-gradient(#78b6f2,#3f85c3);box-shadow:inset 0 1px 0 #ffffff9c}
+.topic-session .session-topic{margin:0;font-size:30px;line-height:1.4;letter-spacing:-.4px;font-weight:600;color:#243d56;text-wrap:pretty}
+.topic-session .session-tools{flex-shrink:0;padding-top:15px;align-items:center}
+.topic-progress-line{display:flex;align-items:center;gap:18px;margin-top:18px;padding-top:16px;border-top:1px solid #dce7f0}
+.topic-session .topic-progress-line .step-label{display:inline-flex;align-items:center;white-space:nowrap;color:#315d84;font-size:13px;font-weight:500;line-height:1.4;padding:6px 11px;background:#edf4fb;border:1px solid #e0eaf4;border-radius:9px}
+.topic-session .progress-track{margin:0!important;flex:1;height:10px;min-width:0}
+.topic-session .session-steps{margin-top:11px}
+@media(min-width:1120px) and (min-height:740px){.learning-scale .topic-session .session-topic{font-size:32px}.learning-scale .topic-session .session-step{font-size:12px}.learning-scale .topic-session .topic-progress-line .step-label{font-size:14px}}
+@media(max-width:750px){.topic-session{padding:20px 21px 16px}.topic-session .study-header{display:flex;flex-wrap:wrap;gap:14px}.topic-session .session-title{flex-basis:100%}.topic-session .session-topic{font-size:25px;line-height:1.45;letter-spacing:0}.topic-kicker{font-size:11px;margin-bottom:8px}.topic-session .session-tools{padding:0;width:100%;justify-content:flex-end}.topic-session .topic-progress-line{margin-top:13px;padding-top:13px;gap:12px}.topic-session .topic-progress-line .step-label{font-size:12px}}
+@media(prefers-reduced-transparency:reduce){.topic-session{background:#fff}}
+@media(prefers-contrast:more){.topic-session .session-topic{color:#163650}.topic-kicker{color:#31577c}.topic-progress-line{border-color:#829db5}}
+
+/* 讲解页没有初试反馈时：桌面左右双栏，不再是居中的窄竖版 */
+@media(min-width:1120px){
+ .intro-layout:not(.has-entry-result){max-width:none;margin:0}
+ .intro-layout:not(.has-entry-result) .intro-sheet{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 48px;align-items:start;padding:34px 40px}
+ .intro-layout:not(.has-entry-result) .intro-main,.intro-layout:not(.has-entry-result) .intro-side{min-width:0}
+ .intro-layout:not(.has-entry-result) .intro-side{padding-left:40px;border-left:1px solid #dce7f0}
+}
+.intro-sheet details>summary{cursor:pointer}
+
+/* 我答对了：第三个按钮（复制 AI 核对指令）独占一行，前两个决定性操作并排 */
+.translation-check-actions>.button:nth-child(3){grid-column:1/-1}
