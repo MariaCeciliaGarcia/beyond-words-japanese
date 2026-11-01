@@ -12,6 +12,12 @@ const emptyState=()=>({version:1,enrolled:false,mastered:false,learn:null,review
 let store={version:2,activeId:'jp-yoyuu',records:{},ui:{}};
 try { const saved=loadStoredProgress(); if(saved?.version===2&&saved.records)store={...store,...saved}; } catch {document.getElementById('storage-warning').hidden=false;}
 const recoveredPersonalCount=0;
+// 题量方案（question-plan.js）只在装载时裁减题目：已经做到一半的学习轮和复习轮，继续用开始时的完整题目，不能因升级而题号越界。
+for(const [id,saved]of Object.entries(store.records)){
+ const u=unitById.get(id);if(!u?.fullLearning||!saved)continue;
+ if(saved.learn&&['exercise','custom'].includes(saved.learn.stage)&&!saved.learn.pinnedLearning)saved.learn.pinnedLearning=u.fullLearning;
+ if(saved.review&&!saved.review.pinnedQuestions)saved.review.pinnedQuestions=u.fullReview;
+}
 let lesson=unitById.get(store.activeId)||units[0];
 let state=store.records[lesson.id]||emptyState();
 store.records[lesson.id]=state;

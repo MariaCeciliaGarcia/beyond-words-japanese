@@ -7,6 +7,7 @@
  const pick=(list,idx)=>idx.filter(i=>i<list.length).map(i=>list[i]);
  function plan(unit){
   if(!unit||unit.questionPlan||!Array.isArray(unit.learning)||!Array.isArray(unit.review))return;
+  unit.fullLearning=unit.learning;unit.fullReview=unit.review; // 已经开始的轮次继续用开始时的完整题目，见 app.js 的装载迁移
   const plain=!unit.practiceProfile&&unit.learning.length===5&&unit.review.length===5&&unit.learning.every(q=>type(q)==='input'); // 早期的翻译型表达，与可造句同样处理
   if(unit.practiceProfile==='compose'||plain){
    if(unit.learning.length>3)unit.learning=pick(unit.learning,[0,2,4]);

@@ -26,4 +26,25 @@ click(e,'mark-correct');assert(r("app.innerHTML.includes('答对了')"));assert(
 click(e,'intro-next');assert.equal(r('state.learn.stage'),'exercise');
 // 已匹配的答案不出现“我答对了”
 r(`state.learn=newLearning();view='study';state.learn.q.input=lesson.entry.answers[0];render();`);click(e,'check');assert(!r("app.innerHTML.includes('data-action=\"mark-correct\"')"));
+// 升级前已经做到一半的轮次（旧题量 5+5）：不能被判成“原进度无法读取”，且要能照原题继续做完
+{const toggle=on=>{if(on)process.env.BW_PLAN='1';else delete process.env.BW_PLAN;};
+ toggle(false);const oldEnv=setup();
+ const ids=JSON.parse(oldEnv.run("JSON.stringify({compose:units.find(u=>u.practiceProfile==='compose'||(!u.practiceProfile&&u.learning.length===5)).id,scenario:units.find(u=>u.practiceProfile==='scenario').id})"));
+ for(const [kind,uid] of Object.entries(ids)){
+  for(const idx of [3,4]){
+   toggle(false);const a=setup();a.run(`selectLesson('${uid}');state.learn=newLearning();state.learn.stage='exercise';state.learn.index=${idx};state.learn.results=Array.from({length:${idx}},(_,i)=>({id:'l'+(i+1),grade:'good',kind:'input',time:1}));state.learn.pinnedLearning=unitById.get('${uid}').fullLearning||unitById.get('${uid}').learning;enrolled();save();`);
+   const saved=JSON.parse(a.map.get(a.run('KEY')));for(const rec of Object.values(saved.records))if(rec.learn)delete rec.learn.pinnedLearning; // 升级前的轮次没有题目快照
+   toggle(true);const b=setup(null,saved);
+   assert.equal(b.run('progressReadOnly'),false,kind+' 学习中 '+idx);
+   b.run(`selectLesson('${uid}');view='study';render();`);
+   assert(b.run('!!learningQuestion()'),kind+' 题目缺失 '+idx);
+  }
+  toggle(false);const c=setup();c.run(`selectLesson('${uid}');enrolled();startReview();state.review.queue=[...state.review.queue,...((unitById.get('${uid}').fullReview||unitById.get('${uid}').review).slice(3).map(q=>q.id))];state.review.pinnedQuestions=unitById.get('${uid}').fullReview||unitById.get('${uid}').review;save();`);
+  const savedReview=JSON.parse(c.map.get(c.run('KEY')));for(const rec of Object.values(savedReview.records))if(rec.review)delete rec.review.pinnedQuestions;
+  toggle(true);const d=setup(null,savedReview);assert.equal(d.run('progressReadOnly'),false,kind+' 复习中');
+  d.run(`selectLesson('${uid}');view='practice';render();`);
+  assert(d.run('state.review.queue.every(id=>pool().some(q=>q.id===id))'),kind+' 复习题缺失');
+ }
+ toggle(true);
+}
 console.log('PASS: question plan',JSON.stringify(stat),'and mark-correct');
